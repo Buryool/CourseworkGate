@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -13,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class Servlet_Gate extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         System.out.println("doPost方法被调用！");
         String want = request.getParameter("want");
         String info = request.getParameter("info");
@@ -22,10 +23,20 @@ public class Servlet_Gate extends HttpServlet {
         System.out.println(message);
         switch (want){
             case "query":
-                // TODO 这里要实现从Gate向客户端返回数据的功能
-                sendMessageAndWaitForReply("http://localhost:2221/CourseworkHandle01_Web_exploded/Handle01", message);
+                String replyFromHandle01 = sendMessageAndWaitForReply("http://localhost:2221/Handle01", message);
+                writeIntoResponse(replyFromHandle01, response);
                 break;
         }
+    }
+
+    // 将信息包装进response对象
+    protected  HttpServletResponse writeIntoResponse(String info, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        try (PrintWriter out = response.getWriter()) {
+            out.print(info);
+        }
+        return response;
     }
 
     // 向指定URL发送指定信息
@@ -59,7 +70,7 @@ public class Servlet_Gate extends HttpServlet {
             //关闭Web服务连接
             content.close();
 
-            return sb.toString();
+            return sb.toString("UTF-8");
         } catch (IOException ex) {
             return null;
         }
